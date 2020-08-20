@@ -1,4 +1,5 @@
 use crate::IVPProblem;
+use crate::StopCondition;
 
 use alga::general::RealField;
 use alga::linear::NormedSpace;
@@ -20,7 +21,7 @@ where T: RealField
         }
     }
 
-    pub fn get_iter<'a, S>(&self, prob : &'a IVPProblem<T, S>, stepsize : T) -> ForwardEulerIterator<'a, T, S>
+    pub fn get_iter<'a, S>(&self, prob : &'a IVPProblem<T, S>) -> ForwardEulerIterator<'a, T, S>
     where
         S : NormedSpace<RealField = T, ComplexField = T>
     {
@@ -28,7 +29,7 @@ where T: RealField
             current_state : prob.get_initial_state().clone(),
             current_time : prob.get_initial_time().clone(),
             prob : prob,
-            h : stepsize 
+            h : self.stepsize 
         };
 
         return iterator;
@@ -70,11 +71,15 @@ where
 
         let result = (t1, s1);
 
-
-        if self.prob.should_stop(&t1, &s1) {
-            None
-        } else {
-            Some(result)
+        match self.prob.get_stop_condition() {
+            StopCondition::TimeBased(t_end) => {
+                if t1 <= *t_end {
+                    return Some(result);
+                }
+                else {
+                    return None;
+                }
+            } 
         }
     }
 }
@@ -84,24 +89,24 @@ mod test {
 
     use na::Matrix6;
     use na::Vector6;
-    use crate::methods::forward_euler::ForwardEuler;
-    use crate::IVPProblem;
-    use crate::IVPProblemBase;
+    use crate::methods::ForwardEuler;
+    use crate::{IVPProblemBase, IVPProblem, StopCondition};
 
     #[test]
     fn solve_exponential_problem() {
         let ivp_problem =  IVPProblemBase {
-            initial_state : 1.0,
             initial_time : 0.0,
-            end_time : 1.0,
+            initial_state : 1.0,
+            stop_condition : StopCondition::TimeBased(1.0),
             func : &(|_, &y| y)
 
         };
 
-        let solver = ForwardEuler::<f64> {
-            stepsize : 0.01
-        };
-        let iter = solver.get_iter(&ivp_problem, 0.01);
+        let solver = ForwardEuler::<f64>::new(
+            0.01
+        );
+
+        let iter = solver.get_iter(&ivp_problem);
 
         let estimated = iter.last().unwrap().1;
         let actual = std::f64::consts::E;
@@ -127,7 +132,7 @@ mod test {
         let problem = IVPProblemBase {
             initial_state : Vector6::new(1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
             initial_time : 0.0,
-            end_time : 1.0,
+            stop_condition : StopCondition::TimeBased(1.0),
             func : &(|_, x| matrix*x)
         };
 
@@ -135,7 +140,7 @@ mod test {
             stepsize : 0.01
         };
 
-        let iterator = solver.get_iter(&problem, 0.01);
+        let iterator = solver.get_iter(&problem);
         let _ = iterator.last();
     }
 }

@@ -26,8 +26,13 @@ where
 
     fn derive(&self, t :&S::RealField, s : &S) -> S;
 
-    fn should_stop(&self, t : &S::RealField, s : &S) -> bool;
+    fn get_stop_condition(&self) -> &StopCondition<T>;
 }
+
+pub enum StopCondition<T> {
+    TimeBased(T),
+}
+
 
 pub struct IVPProblemBase<'a, T, S>
 where
@@ -36,7 +41,7 @@ where
 {
     initial_state : S,
     initial_time : S::RealField,
-    end_time: S::RealField,
+    stop_condition: StopCondition<T>,
     func : &'a dyn Fn(&S::RealField, &S) -> S,
 }
 
@@ -58,8 +63,8 @@ where
         return (self.func)(t, s);
     }
 
-    fn should_stop(&self, t: &S::RealField, _: &S ) -> bool {
-        return t.clone() > self.end_time.clone()
+    fn get_stop_condition(&self) -> &StopCondition<T> {
+        return &self.stop_condition;
     }
 }
 
@@ -76,7 +81,7 @@ fn main() {
     let problem = IVPProblemBase {
         initial_state : initial_state,
         initial_time : 0.0 ,
-        end_time : 1.0,
+        stop_condition : StopCondition::TimeBased(1.0),
         func : &(|_, x| matrix*x)
     };
 

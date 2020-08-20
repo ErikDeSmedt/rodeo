@@ -2,7 +2,8 @@ use alga::general::{RealField};
 use alga::linear::{
     NormedSpace
 };
-use crate::IVPProblem;
+
+use crate::{IVPProblem, StopCondition};
 
 
 pub struct BackwardEuler<T : RealField> {
@@ -94,12 +95,18 @@ where
         self.current_state = s1_next;
 
         let result = (t1, s1_next);
-        if !self.problem.should_stop(&t1, &s1_next) {
-            Some(result)
-        } else {
-            None
+
+        match self.problem.get_stop_condition() {
+            StopCondition::TimeBased(t_end) => {
+                if t1 <= *t_end {
+                    return Some(result);
+                }
+                else {
+                    return None;
+                }
+            } 
         }
-    }
+   }
 }
 
 #[cfg(test)]
@@ -107,16 +114,15 @@ mod test {
 
     use na::Matrix6;
     use na::Vector6;
-    use crate::methods::backward_euler::BackwardEuler;
-    use crate::IVPProblem;
-    use crate::IVPProblemBase;
+    use crate::methods::BackwardEuler;
+    use crate::{IVPProblemBase, IVPProblem, StopCondition};
 
     #[test]
     fn solve_exponential_problem() {
         let ivp_problem =  IVPProblemBase {
             initial_state : 1.0,
             initial_time : 0.0,
-            end_time : 1.0,
+            stop_condition : StopCondition::TimeBased(1.0),
             func : &(|_, &y| y)
 
         };
@@ -152,7 +158,7 @@ mod test {
         let problem = IVPProblemBase {
             initial_state : Vector6::new(1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
             initial_time : 0.0,
-            end_time : 1.0,
+            stop_condition : StopCondition::TimeBased(1.0),
             func : &(|_, x| matrix*x)
         };
 
