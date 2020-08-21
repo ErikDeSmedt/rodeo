@@ -8,36 +8,30 @@ mod methods;
 
 use na::{Matrix6,Vector6};
 
-use alga::linear::NormedSpace;
-use alga::general::RealField;
-
-use crate::methods::ForwardEuler;
 use crate::methods::BackwardEuler;
 
-pub trait IVPProblem<T, S> 
-where
-    T : RealField, 
-    S : NormedSpace<RealField = T, ComplexField = T>
+pub trait IVPProblem 
 {
+    type RealField : alga::general::RealField;
+    type NormedSpace : alga::linear::NormedSpace<RealField=Self::RealField, ComplexField=Self::RealField>;
 
-    fn get_initial_state(&self) -> &S;
+    fn get_initial_state(&self) -> &Self::NormedSpace;
 
-    fn get_initial_time(&self) -> &S::RealField;
+    fn get_initial_time(&self) -> &Self::RealField;
 
-    fn derive(&self, t :&S::RealField, s : &S) -> S;
+    fn derive(&self, t :&Self::RealField, s : &Self::NormedSpace) -> Self::NormedSpace;
 
-    fn get_stop_condition(&self) -> &StopCondition<T>;
+    fn get_stop_condition(&self) -> &StopCondition<Self::RealField>;
 }
 
 pub enum StopCondition<T> {
     TimeBased(T),
 }
 
-
 pub struct IVPProblemBase<'a, T, S>
 where
-    T : RealField,
-    S : NormedSpace<RealField = T, ComplexField = T>
+    T : alga::general::RealField,
+    S : alga::linear::NormedSpace<RealField = T, ComplexField = T>
 {
     initial_state : S,
     initial_time : S::RealField,
@@ -45,25 +39,27 @@ where
     func : &'a dyn Fn(&S::RealField, &S) -> S,
 }
 
-impl<'a, T, S> IVPProblem<T, S> for IVPProblemBase<'a, T, S> 
+impl<'a, T, S> IVPProblem for IVPProblemBase<'a, T, S> 
 where
-    T : RealField,
-    S : NormedSpace<RealField = T, ComplexField=T>
+    T : alga::general::RealField,
+    S : alga::linear::NormedSpace<RealField = T, ComplexField= T>
 {
-    fn get_initial_state(&self) -> &S {
+    type RealField = T;
+    type NormedSpace = S;
+
+    fn get_initial_state(&self) -> &Self::NormedSpace {
         return &self.initial_state;
     }
 
-    fn get_initial_time(&self) -> &S::RealField {
+    fn get_initial_time(&self) -> &Self::RealField {
         return &self.initial_time;
     }
 
-
-    fn derive(&self, t :&S::RealField, s : &S) -> S {
+    fn derive(&self, t :&Self::RealField, s : &Self::NormedSpace) -> Self::NormedSpace {
         return (self.func)(t, s);
     }
 
-    fn get_stop_condition(&self) -> &StopCondition<T> {
+    fn get_stop_condition(&self) -> &StopCondition<Self::RealField> {
         return &self.stop_condition;
     }
 }

@@ -21,7 +21,7 @@ where T: RealField
         }
     }
 
-    pub fn get_iter<'a, S>(&self, prob : &'a IVPProblem<T, S>) -> ForwardEulerIterator<'a, T, S>
+    pub fn get_iter<'a, S>(&self, prob : &'a IVPProblem<RealField = T, NormedSpace = S>) -> ForwardEulerIterator<'a, T, S>
     where
         S : NormedSpace<RealField = T, ComplexField = T>
     {
@@ -43,7 +43,7 @@ where
 {
     current_state : S,
     current_time : T,
-    prob : &'a dyn IVPProblem<T, S>,
+    prob : &'a dyn IVPProblem<RealField = T, NormedSpace = S>,
     h : T,
 }
 

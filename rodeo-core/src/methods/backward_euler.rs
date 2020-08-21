@@ -25,7 +25,7 @@ where
         }
     }
 
-    pub fn get_iter<'a, S>(self, prob : &'a dyn IVPProblem<T, S>) -> BackwardEulerIterator<'a, T, S>
+    pub fn get_iter<'a, S>(self, prob : &'a dyn IVPProblem<RealField=T, NormedSpace=S>) -> BackwardEulerIterator<'a, T, S>
     where
         S : NormedSpace<RealField = T, ComplexField = T>
     {
@@ -45,7 +45,7 @@ where
     T : RealField,
     S : NormedSpace<RealField = T, ComplexField = T>
 {
-    problem : &'a dyn IVPProblem<T, S>,
+    problem : &'a dyn IVPProblem<RealField = T, NormedSpace =S>,
     solver : BackwardEuler<T>,
     current_state : S,
     current_time : T,
@@ -124,7 +124,6 @@ mod test {
             initial_time : 0.0,
             stop_condition : StopCondition::TimeBased(1.0),
             func : &(|_, &y| y)
-
         };
 
         let solver = BackwardEuler {
