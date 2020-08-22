@@ -16,7 +16,7 @@ rodeo = "0.0.0"
 
 An initial value-problem can be represented by implementing the `IVPProblem`-trait.
 
-```
+```rust
 fn main() {
     let problem = ...;
     
